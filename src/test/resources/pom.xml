@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.musialowski</groupId>
+    <artifactId>sql-container</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.musialowski</groupId>
+                <artifactId>sql-container</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+                <configuration>
+                    <sqlResources>
+                        <sql>src/test/resources/sample.sql</sql>
+                    </sqlResources>
+                    <outputDirectory>target/generated-sources/sql</outputDirectory>
+                    <packageName>com.musialowski.sqlcontainer.sql</packageName>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>sql-class</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>sql-container-class-generator</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

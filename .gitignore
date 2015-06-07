@@ -1,0 +1,40 @@
+# Java git ignore
+*target*
+*.jar
+*.war
+*.ear
+*.class
+
+#Intellije specific git ignore
+*.iml
+.idea/*
+*.ipr
+*.iws
+
+# NetBeans specific git ignore
+*nbactions.xml
+nb-configuration.xml
+
+# eclipse specific git ignore
+*.pydevproject
+.project
+.metadata
+bin/**
+tmp/**
+tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/
+.loadpath
+
+# External tool builders
+.externalToolBuilders/
+
+# Locally stored "Eclipse launch configurations"
+*.launch
+/.checkstyle
+/.pmd
