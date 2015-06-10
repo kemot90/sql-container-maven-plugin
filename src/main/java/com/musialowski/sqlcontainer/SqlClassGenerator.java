@@ -19,16 +19,14 @@ public class SqlClassGenerator {
         this.logger = logger;
     }
 
-    public void generateSqlContainerClass(String fileName, String packageName, File outputDirectory, Map<String, String> methodNameReturnedStringMap) {
+    public void generateSqlContainerClass(String fileName, String packageName, File outputDirectory, Set<SqlStatementFieldVar> sqlStatementFieldVars) {
         JCodeModel codeModel = new JCodeModel();
         try {
             JDefinedClass _class = codeModel._class(packageName + "." + getClassName(fileName));
-            Set<Map.Entry<String, String>> methodsEntires = methodNameReturnedStringMap.entrySet();
-            for (Map.Entry<String, String> methodEntry : methodsEntires) {
-                JMethod method = _class.method(JMod.PUBLIC | JMod.STATIC, String.class, methodEntry.getKey());
-                String javadoc = "<pre>\n{@code\t" + methodEntry.getValue() + "\n}\n</pre>";
-                method.javadoc().addReturn().add(javadoc);
-                method.body()._return(JExpr.lit(methodEntry.getValue()));
+            for (SqlStatementFieldVar sqlStatementFieldVar : sqlStatementFieldVars) {
+                JFieldVar fieldVar = _class.field(JMod.PUBLIC | JMod.STATIC | JMod.FINAL, String.class, sqlStatementFieldVar.getName());
+                fieldVar.javadoc().append("<pre>{@code\n" + sqlStatementFieldVar.getComment() + "\n}</pre>");
+                fieldVar.init(JExpr.lit(sqlStatementFieldVar.getValue()));
             }
             outputDirectory.mkdirs();
             codeModel.build(outputDirectory);

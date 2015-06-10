@@ -9,19 +9,19 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Tomasz Musiałowski
  */
 public class SqlFilesProcessor {
 
+    private static final String DEFAULT_METHOD_DEFINITION_PREFIX = "--#";
+    private static final String DEFAULT_EOF = "\n";
+    private static final String DEFAULT_SQL_STATEMENT_SEPARATOR = ";";
     private final Log logger;
-    private static final String METHOD_NAME_PREFIX = "--#";
-    private static final String NEW_LINE = "\n";
-    private static final String SQL_PLACEHOLDER = "";
 
     public SqlFilesProcessor(Log logger) {
         this.logger = logger;
@@ -29,33 +29,49 @@ public class SqlFilesProcessor {
 
     public boolean processSqlFile(File sqlFile, File outputDirectory, String packageName) {
         List<String> fileLines;
-        InputStream sqlFileInputStream = null;
-        Map<String, String> methodNameReturnedStringMap = new HashMap<>();
         try {
-            fileLines = IOUtils.readLines(sqlFileInputStream = new FileInputStream(sqlFile));
-        } catch (IOException ex) {
-            logger.error(ex.getLocalizedMessage(), ex);
-            IOUtils.closeQuietly(sqlFileInputStream);
+            try (InputStream sqlFileInputStream = new FileInputStream(sqlFile)) {
+                fileLines = IOUtils.readLines(sqlFileInputStream);
+            }
+        } catch (IOException e) {
+            logger.error(e.getLocalizedMessage(), e);
             return false;
         }
-        StringBuffer sqlStatementBuffer = new StringBuffer();
+
+        Set<SqlStatementFieldVar> sqlStatementFieldVars = new HashSet<>();
+        StringBuffer sqlStatementCommentBuffer = new StringBuffer();
+        StringBuffer sqlStatementValueBuffer = new StringBuffer();
         String lastestKey = "";
         for (String line : fileLines) {
-            line = StringUtils.remove(line, ";");
-            if (line.startsWith(METHOD_NAME_PREFIX)) {
-                methodNameReturnedStringMap.put(lastestKey, sqlStatementBuffer.toString());
-                sqlStatementBuffer = new StringBuffer();
-                String methodName = StringUtils.removeStart(line, METHOD_NAME_PREFIX);
+            if (line.startsWith(DEFAULT_METHOD_DEFINITION_PREFIX)) {
+                if (StringUtils.isNotBlank(lastestKey)) {
+                    sqlStatementFieldVars.add(new SqlStatementFieldVar(lastestKey, removeLastSqlStatementSeparator(sqlStatementCommentBuffer.toString().trim()), inlineSqlStatement(removeLastSqlStatementSeparator(sqlStatementValueBuffer.toString().trim()))));
+                }
+                sqlStatementValueBuffer = new StringBuffer();
+                sqlStatementCommentBuffer = new StringBuffer();
+                String methodName = prepareSqlStatementName(line);
                 lastestKey = methodName;
-                methodNameReturnedStringMap.put(methodName, SQL_PLACEHOLDER);
                 continue;
             }
-            sqlStatementBuffer.append(line).append(NEW_LINE);
+            sqlStatementCommentBuffer.append(line).append(DEFAULT_EOF);
+            sqlStatementValueBuffer.append(line.trim()).append(" ");
         }
-        methodNameReturnedStringMap.put(lastestKey, sqlStatementBuffer.toString());
-        methodNameReturnedStringMap.remove("");
+        sqlStatementFieldVars.add(new SqlStatementFieldVar(lastestKey, removeLastSqlStatementSeparator(sqlStatementCommentBuffer.toString().trim()), inlineSqlStatement(removeLastSqlStatementSeparator(sqlStatementValueBuffer.toString().trim()))));
+
         SqlClassGenerator sqlClassGenerator = new SqlClassGenerator(logger);
-        sqlClassGenerator.generateSqlContainerClass(FilenameUtils.removeExtension(sqlFile.getName()), packageName, outputDirectory, methodNameReturnedStringMap);
+        sqlClassGenerator.generateSqlContainerClass(FilenameUtils.removeExtension(sqlFile.getName()), packageName, outputDirectory, sqlStatementFieldVars);
         return true;
+    }
+
+    private String removeLastSqlStatementSeparator(String sqlStatement) {
+        return StringUtils.reverse(StringUtils.reverse(sqlStatement).replaceFirst(DEFAULT_SQL_STATEMENT_SEPARATOR, ""));
+    }
+
+    private String inlineSqlStatement(String sqlStatement) {
+        return sqlStatement.replaceAll("[\\t\\n\\r]+", " ");
+    }
+
+    private String prepareSqlStatementName(String sqlStatement) {
+        return StringUtils.removeStart(sqlStatement, DEFAULT_METHOD_DEFINITION_PREFIX).replaceAll("(.)([A-Z][a-z]+)", "$1_$2").replaceAll("([a-z0-9])([A-Z])", "$1_$2").toUpperCase();
     }
 }
