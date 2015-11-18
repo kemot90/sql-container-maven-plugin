@@ -9,6 +9,9 @@
     <version>0.0.1-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
+    <name>SQL Container</name>
+    <description>Plugin which generates Java classes with static SQL statements from SQL files.</description>
+
     <properties>
         <maven.version>3.3.1</maven.version>
     </properties>
@@ -83,6 +86,11 @@
             <artifactId>jaxb-xjc</artifactId>
             <version>2.2.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.16.0</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -94,6 +102,14 @@
                 <configuration>
                     <source>1.7</source>
                     <target>1.7</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-plugin</artifactId>
+                <version>3.3</version>
+                <configuration>
+                    <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
                 </configuration>
             </plugin>
         </plugins>

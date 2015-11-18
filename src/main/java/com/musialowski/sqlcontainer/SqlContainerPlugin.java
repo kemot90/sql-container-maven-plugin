@@ -1,5 +1,6 @@
 package com.musialowski.sqlcontainer;
 
+import com.musialowski.sqlcontainer.enums.StorageMethod;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -8,6 +9,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import java.io.File;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -17,7 +19,7 @@ import java.util.Map;
 @Mojo(name = "sql-container-class-generator", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 public class SqlContainerPlugin extends AbstractMojo {
 
-    @Parameter(required=true, defaultValue="${project.build.directory}/generated-sources/sql")
+    @Parameter(required = true, defaultValue = "${project.build.directory}/generated-sources/sql")
     private File outputDirectory;
 
     @Parameter
@@ -25,6 +27,9 @@ public class SqlContainerPlugin extends AbstractMojo {
 
     @Parameter
     private String packageName;
+
+    @Parameter(defaultValue = "both")
+    private String storageMethod;
 
     private SqlFilesProcessor sqlFilesProcessor = new SqlFilesProcessor(getLog());
 
@@ -37,18 +42,24 @@ public class SqlContainerPlugin extends AbstractMojo {
         }
 
         if (sqlResources != null) {
-            List<String> resourcesPaths = (List<String>)(List<?>) sqlResources;
+            List<String> resourcesPaths = (List<String>) (List<?>) sqlResources;
+            List<File> sqlResources = new LinkedList<>();
             for (String path : resourcesPaths) {
                 String fixedPath = path.replace("/", File.separator);
-                File sqlFile = new File(fixedPath);
-                if (sqlFile.isFile()) {
-                    if (!sqlFilesProcessor.processSqlFile(sqlFile, outputDirectory, packageName)) {
-                        getLog().warn("Generating class from SQL file " + sqlFile.getAbsolutePath() + " failed.");
-                    }
-                } else {
-                    getLog().warn("Given path '" + sqlFile.getAbsolutePath() + "' is not a file.");
-                }
+                sqlResources.add(new File(fixedPath));
+            }
+            FileProcessingConfiguration configuration = FileProcessingConfiguration.builder()
+                    .outputDirectory(outputDirectory)
+                    .packageName(packageName)
+                    .storageMethod(getStorageMethod(storageMethod))
+                    .build();
+            if (!sqlFilesProcessor.processSqlFile(configuration, sqlResources)) {
+                getLog().error("Generating class from SQL files failed.");
             }
         }
+    }
+
+    private StorageMethod getStorageMethod(String storageMethodLiteral) {
+        return StorageMethod.valueOf(storageMethodLiteral.toUpperCase());
     }
 }
