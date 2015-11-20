@@ -43,7 +43,7 @@ public class SqlContainerPlugin extends AbstractMojo {
 
         if (sqlResources != null) {
             List<String> resourcesPaths = (List<String>) (List<?>) sqlResources;
-            List<File> sqlResources = new LinkedList<>();
+            List<File> sqlResources = new LinkedList<File>();
             for (String path : resourcesPaths) {
                 String fixedPath = path.replace("/", File.separator);
                 sqlResources.add(new File(fixedPath));

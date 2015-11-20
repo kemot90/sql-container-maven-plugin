@@ -42,12 +42,14 @@ public class SqlClassGenerator {
                         break;
                 }
             }
-            if (!outputDirectory.mkdirs()) {
+            if (!outputDirectory.exists() && !outputDirectory.mkdirs()) {
                 logger.error("Creating output directory '" + outputDirectory.getAbsolutePath() + "' failed.");
                 return;
             }
             codeModel.build(outputDirectory);
-        } catch (JClassAlreadyExistsException | IOException e) {
+        } catch (JClassAlreadyExistsException e) {
+            logger.error(e.getLocalizedMessage(), e);
+        } catch (IOException e) {
             logger.error(e.getLocalizedMessage(), e);
         }
     }

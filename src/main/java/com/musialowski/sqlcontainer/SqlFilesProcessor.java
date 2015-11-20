@@ -37,7 +37,7 @@ public class SqlFilesProcessor {
             }
             List<String> fileLines;
             InputStream sqlFileInputStream = null;
-            Map<String, String> methodNameReturnedStringMap = new HashMap<>();
+            Map<String, String> methodNameReturnedStringMap = new HashMap<String, String>();
             try {
                 fileLines = IOUtils.readLines(sqlFileInputStream = new FileInputStream(sqlFile));
             } catch (IOException ex) {
